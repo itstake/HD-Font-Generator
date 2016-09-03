@@ -33,11 +33,11 @@ public class AsciiPackUtils {
     public static BufferedImage render(HDFont font) throws IOException {
         loadAsciiTxt();
 
-        return render(font, ascii);
+        return render(font, ascii, false);
 
     }
 
-    public static BufferedImage render(HDFont font, int tableInt) throws IOException {
+    public static BufferedImage render(HDFont font, int tableInt, boolean isUnicode) throws IOException {
         int a = tableInt << 8;
         char[][] table = new char[16][16];
         for (int y = 0; y < 16; y++) {
@@ -46,7 +46,7 @@ public class AsciiPackUtils {
                 table[y][x] = (char) (a + b + x);
             }
         }
-        return render(font, table);
+        return render(font, table, isUnicode);
     }
 
     /**
@@ -59,7 +59,7 @@ public class AsciiPackUtils {
      * @throws IOException
      * @throws FontFormatException
      */
-    public static BufferedImage render(HDFont font, char[][] ascii) throws IOException {
+    public static BufferedImage render(HDFont font, char[][] ascii, boolean isUnicode) throws IOException {
         if (fallback == null) {
             try {
                 fallback = Font.createFont(Font.TRUETYPE_FONT,
@@ -98,6 +98,9 @@ public class AsciiPackUtils {
                 // pre-render the character
                 gc.setFont(f);
                 gc.drawChars(new char[] { ch }, 0, 1, 0, yy);
+                if(isUnicode) {
+                    GlyphSizeMaker.addByte(Byte.parseByte(String.valueOf(gc.getFontMetrics(f).charWidth(ch) - 1), 10));
+                }
                 gc.dispose();
 
                 // draw the pre-rendered character
@@ -112,7 +115,6 @@ public class AsciiPackUtils {
      * Creates a resource pack containing the image as the ascii font.
      * 
      * @param description The description and name of the resource pack
-     * @param ascii The ASCII font image to use.
      */
     public static void pack(String description, List<FontTexture> list) throws IOException {
         loadPackJson();

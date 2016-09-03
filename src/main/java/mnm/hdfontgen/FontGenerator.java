@@ -1,8 +1,10 @@
 package mnm.hdfontgen;
 
+import javax.imageio.ImageIO;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +27,19 @@ public class FontGenerator implements Runnable {
         List<FontTexture> list = new ArrayList<>();
 
         String desc = font.getFriendlyName();
-
         if (!quiet)
             System.out.println("Rendering ascii");
 
         BufferedImage ascii = AsciiPackUtils.render(font);
-        list.add(new FontTexture("ascii", ascii));
+        File fontNameFolder = new File(desc);
+        if(!fontNameFolder.isDirectory())
+            fontNameFolder.mkdir();
+        File fontFolder = new File(desc + "/font");
+        if(!fontFolder.isDirectory())
+            fontFolder.mkdir();
+        File asciiFile = new File(desc + "/font/ascii.png");
+        ImageIO.write(ascii, "png", asciiFile);
+        ascii.flush();
         if (font.isUnicode()) {
             for (int i = 0x00; i <= 0xff; i++) {
                 String name = Integer.toString(i, 16);
@@ -41,14 +50,12 @@ public class FontGenerator implements Runnable {
                 if (!quiet)
                     System.out.println("Rendering unicode page " + name);
 
-                BufferedImage page = AsciiPackUtils.render(font, i);
-                list.add(new FontTexture("unicode_page_" + name, page));
+                BufferedImage page = AsciiPackUtils.render(font, i, true);
+                ImageIO.write(page, "png", new File(desc + "/font/unicode_page_" + name + ".png"));
+                page.flush();
             }
         }
-        if (!quiet)
-            System.out.println("Preparing resource pack.");
-
-        AsciiPackUtils.pack(desc, list);
+        GlyphSizeMaker.write(new File(desc + "/glyph_sizes.bin"));
         printSuccess(font);
     }
 
