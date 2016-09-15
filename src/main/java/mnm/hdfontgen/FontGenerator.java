@@ -4,8 +4,7 @@ import javax.imageio.ImageIO;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,19 +24,25 @@ public class FontGenerator implements Runnable {
 
     public static void generate(HDFont font) throws IOException {
         List<FontTexture> list = new ArrayList<>();
-
+        GlyphSizeMaker.clearByte();
         String desc = font.getFriendlyName();
         if (!quiet)
             System.out.println("Rendering ascii");
 
         BufferedImage ascii = AsciiPackUtils.render(font);
-        File fontNameFolder = new File(desc);
-        if(!fontNameFolder.isDirectory())
-            fontNameFolder.mkdir();
-        File fontFolder = new File(desc + "/font");
-        if(!fontFolder.isDirectory())
-            fontFolder.mkdir();
-        File asciiFile = new File(desc + "/font/ascii.png");
+        if(!new File(desc).isDirectory())
+            new File(desc).mkdir();
+        if(!new File(desc + "/assets").isDirectory())
+            new File(desc + "/assets").mkdir();
+        if(!new File(desc + "/assets/minecraft").isDirectory())
+            new File(desc + "/assets/minecraft").mkdir();
+        if(!new File(desc + "/assets/minecraft/font").isDirectory())
+            new File(desc + "/assets/minecraft/font").mkdir();
+        if(!new File(desc + "/assets/minecraft/textures").isDirectory())
+            new File(desc + "/assets/minecraft/textures").mkdir();
+        if(!new File(desc + "/assets/minecraft/textures/font").isDirectory())
+            new File(desc + "/assets/minecraft/textures/font").mkdir();
+        File asciiFile = new File(desc + "/assets/minecraft/textures/font/ascii.png");
         ImageIO.write(ascii, "png", asciiFile);
         ascii.flush();
         if (font.isUnicode()) {
@@ -49,13 +54,23 @@ public class FontGenerator implements Runnable {
 
                 if (!quiet)
                     System.out.println("Rendering unicode page " + name);
-
-                BufferedImage page = AsciiPackUtils.render(font, i, true);
-                ImageIO.write(page, "png", new File(desc + "/font/unicode_page_" + name + ".png"));
+                HDFont glyphFont = new HDFont(font.getFont(), TextureSize.x32, true);
+                AsciiPackUtils.addGlyphSize(glyphFont, i);
+                BufferedImage page = AsciiPackUtils.render(font, i);
+                ImageIO.write(page, "png", new File(desc + "/assets/minecraft/textures/font/unicode_page_" + name + ".png"));
                 page.flush();
             }
         }
-        GlyphSizeMaker.write(new File(desc + "/glyph_sizes.bin"));
+        GlyphSizeMaker.write(new File(desc + "/assets/minecraft/font/glyph_sizes.bin"));
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(desc + "/pack.mcmeta"), "UTF-8"));
+        writer.write("{\n" +
+                "  \"pack\": {\n" +
+                "    \"pack_format\": 2,\n" +
+                "    \"description\": \"" + desc + "\"\n" +
+                "  }" +
+                "}");
+        writer.flush();
+        writer.close();
         printSuccess(font);
     }
 
@@ -90,7 +105,7 @@ public class FontGenerator implements Runnable {
 
     private static void printSuccess(HDFont hdfont) {
         if (!quiet)
-            System.out.println("Generated font: " + hdfont.getFriendlyName() + ".zip");
+            System.out.println("Generated font: " + hdfont.getFriendlyName() + " folder");
     }
 
     private static void printSizes(String size) {
