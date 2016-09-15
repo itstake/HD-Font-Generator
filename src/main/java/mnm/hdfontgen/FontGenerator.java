@@ -66,7 +66,7 @@ public class FontGenerator implements Runnable {
         writer.write("{\n" +
                 "  \"pack\": {\n" +
                 "    \"pack_format\": 2,\n" +
-                "    \"description\": \"" + desc + "\"\n" +
+                "    \"description\": \"" + desc + "\\nPowered by HDFontGenerator by killjoy1221, edited by ITSTAKE" + "\"\n" +
                 "  }" +
                 "}");
         writer.flush();
